@@ -81,3 +81,23 @@ def test_innerhtml_detected():
 """
     findings = scan_diff(diff)
     assert any("XSS" in f.message for f in findings)
+
+
+def test_string_literal_not_false_positive():
+    """黑名单字符串定义 (如 BLOCKED_PATTERNS=["eval("]) 不应误报 — 实战 trauma-driven-agent 教训。"""
+    code = '''BLOCKED_PATTERNS = ["__import__", "eval(", "exec(", "compile(", "os.system",
+                     "subprocess.call", "pickle.loads", "__builtins__"]
+'''
+    assert scan_code(code) == []
+
+
+def test_real_call_still_detected_after_literal_filter():
+    """真实调用 (前无引号) 仍必须命中 — 防修复过度。"""
+    diff = """+++ b/app.py
+@@ -1,1 +1,3 @@
++    result = eval(user_input)
++    os.system("rm -rf /")
++    subprocess.run(cmd, shell=True)
+"""
+    findings = scan_diff(diff)
+    assert len(findings) == 3, f"got {findings}"
