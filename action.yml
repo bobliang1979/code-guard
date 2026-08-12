@@ -39,14 +39,20 @@ runs:
         pip install --quiet "$GITHUB_ACTION_PATH"
         code-guard --version 2>/dev/null || code-guard demo >/dev/null
 
-    - name: 'Fetch base ref (shallow-clone self-heal)'
+    - name: 'Resolve base ref'
       shell: bash
       run: |
         BASE="${{ inputs.base }}"
-        if ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
-          echo "base $BASE 不在本地 (浅克隆), 尝试 fetch..."
-          git fetch --quiet origin "$BASE" --depth=1 || git fetch --quiet --unshallow
+        if [ -z "$BASE" ]; then
+          # push 事件: 用 event.before (push 前 sha); PR 事件: 用 PR base sha (input 默认)
+          BASE="${{ github.event.before }}"
+          echo "input base 为空, 使用 event.before = ${BASE:0:12}"
         fi
+        if [ -n "$BASE" ] && ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+          echo "base 不在本地, 尝试 fetch..."
+          git fetch --quiet origin "$BASE" --depth=1 2>/dev/null || true
+        fi
+        echo "cg_base=$BASE" >> "$GITHUB_ENV"
 
     - name: 'Run gates'
       shell: bash
@@ -56,8 +62,13 @@ runs:
         if [ "${{ inputs.update-baseline }}" = "true" ]; then EXTRA="$EXTRA --update-baseline"; fi
         if [ "${{ inputs.include-tests }}" = "true" ]; then EXTRA="$EXTRA --include-tests"; fi
         if [ "${{ inputs.llm-review }}" = "true" ]; then EXTRA="$EXTRA --llm-review"; fi
-        # 注意: --base 值直接内联, 不能放进变量再展开 (引号会被当字面字符)
-        code-guard check --dir . --base "${{ inputs.base }}" --timeout ${{ inputs.timeout }} $EXTRA
+        if [ -n "$cg_base" ]; then
+          # 注意: --base 值直接内联, 不能放进变量再展开 (引号会被当字面字符)
+          code-guard check --dir . --base "$cg_base" --timeout ${{ inputs.timeout }} $EXTRA
+        else
+          echo "base 无法解析, 扫描工作区 diff"
+          code-guard check --dir . --timeout ${{ inputs.timeout }} $EXTRA
+        fi
 
 branding:
   icon: 'shield'
