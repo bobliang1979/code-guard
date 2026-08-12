@@ -49,7 +49,14 @@ fail-closed 语义: LLM 报 LOGIC/SECURITY 问题 → BLOCK; API 不可用/超�
 ## 安装
 
 ```bash
-pip install -e .
+# 从 GitHub Release 安装 (推荐, v0.2.0 带构建产物)
+pip install https://github.com/bobliang1979/code-guard/releases/download/v0.2.0/code_guard-0.2.0-py3-none-any.whl
+
+# 或从源码
+git clone https://github.com/bobliang1979/code-guard.git
+cd code-guard && pip install .
+
+# PyPI 发布后: pip install code-guard
 ```
 
 ## 用法
