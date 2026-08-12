@@ -41,6 +41,16 @@ def test_static_gate_skips_test_files_by_default():
     assert r2.status == "FAIL"
 
 
+def test_static_gate_skips_docs():
+    """README 代码示例 (eval(x) 文档) 不触发 — 实战 README.md:124 自扫教训。"""
+    diff = """+++ b/README.md
+@@ -1,1 +1,2 @@
++    可自动修复: eval(x) → ast.literal_eval(x)
+"""
+    r = static_gate(diff)
+    assert r.status == "PASS"
+
+
 def test_fake_pass_gate_no_tests():
     diff = """+++ b/app.py
 @@ -1,1 +1,2 @@

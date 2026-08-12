@@ -20,6 +20,8 @@ from .scanner import BLOCKER, HIGH, Finding, scan_diff
 
 # 常见测试文件/目录特征
 _TEST_FILE_RE = re.compile(r"(^|[/\\])(test_|tests?[/\\]|.*\.(test|spec)\.|__tests__)", re.I)
+# 文档文件跳过: 代码示例非可执行代码 (README/md/docs), 静态门不扫
+_DOC_FILE_RE = re.compile(r"\.(md|markdown|rst|txt|adoc)$", re.I)
 # 测试命令探测表: (检测文件, 命令列表)
 _TEST_DETECT = [
     ("pyproject.toml", [["{py}", "-m", "pytest", "-q", "--tb=no"]]),
@@ -80,7 +82,8 @@ def static_gate(diff_text: str, include_tests: bool = False) -> GateResult:
     """
     findings = scan_diff(diff_text)
     if not include_tests:
-        findings = [f for f in findings if not _TEST_FILE_RE.search(f.file)]
+        findings = [f for f in findings
+                    if not _TEST_FILE_RE.search(f.file) and not _DOC_FILE_RE.search(f.file)]
     blockers = [f for f in findings if f.severity in (BLOCKER, HIGH)]
     if blockers:
         detail = f"{len(blockers)} 处高危命中: " + "; ".join(
