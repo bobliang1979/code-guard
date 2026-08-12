@@ -1,7 +1,12 @@
 name: publish-pypi
 
-# 触发: push v* tag (如 v0.2.0)。需先在仓库设置 secrets.PYPI_TOKEN
-# (PyPI API token: https://pypi.org/manage/account/token/, 权限选 "Upload packages")
+# 发布到 PyPI。两种方式 (任选其一):
+#  A. Trusted Publishing (OIDC, 推荐): 在 PyPI 项目页配置一次后自动发布, 无需 token
+#     PyPI → <project> → Publishing → Add pending publisher:
+#     GitHub owner: bobliang1979, Repository: code-guard, Workflow: publish-pypi.yml
+#  B. API token: 在仓库 Settings → Secrets 添加 PYPI_TOKEN
+#     (https://pypi.org/manage/account/token/, scope 选 "Upload packages")
+# 触发: push v* tag (如 v0.2.0)
 on:
   push:
     tags: ['v*']
@@ -11,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write  # 可选: 用 trusted publishing 替代 token
+      id-token: write  # Trusted Publishing (OIDC) 必需
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -26,10 +31,9 @@ jobs:
           python -m venv /tmp/wt
           /tmp/wt/bin/pip install dist/*.whl
           /tmp/wt/bin/code-guard demo | tail -1
-      - name: Publish to PyPI
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: |
-          pip install twine
-          twine upload --non-interactive dist/*
+      - name: Publish to PyPI (Trusted Publishing / token)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # 方式 A (OIDC): 无需传 token, 自动用 id-token 身份
+          # 方式 B: 配置了 PYPI_TOKEN secret 时自动用它
+          password: ${{ secrets.PYPI_TOKEN }}
