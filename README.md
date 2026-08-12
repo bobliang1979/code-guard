@@ -66,7 +66,7 @@ jobs:
           require-tests: 'true'   # 严格模式: 生产改动必须带测试
 ```
 
-参数: `base`(默认 PR base sha) / `require-tests` / `timeout` / `update-baseline`(首次接入建议 true)。
+参数: `base`(默认 PR base sha) / `require-tests` / `timeout` / `update-baseline`(首次接入建议 true) / `include-tests`(默认跳过测试文件)。
 
 ## Baseline (只拦新增回归)
 
@@ -84,8 +84,8 @@ code-guard check --dir . --update-baseline   # 记录当前失败数为基线
 
 ## 已知边界
 
-- **安全规则库源码自命中**: 用 code-guard 扫描安全工具自身 (含危险模式正则定义表) 会命中规则字符串本身。这是预期行为 — 规则定义行包含 `eval(` 等字面量。真实用户 diff 不受影响。
-- **字符串数据误报**: 代码里含 `"eval("` 字符串字面量 (如测试断言) 会命中。v0.2 计划引入 AST 上下文判断 (仅匹配可执行位置)。
+- **测试文件默认跳过**: 静态门跳过 test_*/tests//spec/__tests__ 文件 — 测试常含故意构造的危险样例 (验证检测器/mock), 且不进入生产。需扫描用 `--include-tests`。
+- **字符串数据误报已缓解**: 规则排除字符串字面量内模式 (`BLOCKED_PATTERNS=["eval("]` 黑名单定义不误报, 实战 trauma-driven-agent 验证) + `\b` 前缀排除规则源码自命中 (code-guard 可自扫)。
 
 ## 路线图
 
