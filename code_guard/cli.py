@@ -101,6 +101,14 @@ def _build_parser() -> argparse.ArgumentParser:
                        help="只看最近 N 天 (默认全部)")
 
     sub.add_parser("demo", help="内嵌演示 (扫描器自测)")
+
+    fix = sub.add_parser("fix", help="自动修复建议 (确定性安全替换, 默认只建议)")
+    fix.add_argument("--dir", default=".", help="仓库根目录 (默认当前目录)")
+    fix.add_argument("--base", default=None, help="git 基线 ref (默认: 暂存区+工作区)")
+    fix.add_argument("--apply", action="store_true",
+                     help="落地 HIGH 置信度修复到工作区 (默认只显示建议)")
+    fix.add_argument("--check", action="store_true",
+                     help="落地后自动复扫验证 (需与 --apply 同用)")
     return p
 
 
@@ -137,6 +145,29 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.command == "stats":
         from .ledger import render_stats, stats as _stats
         print(render_stats(_stats(args.dir, args.days), args.days))
+        return 0
+    if args.command == "fix":
+        from .fixer import apply_fixes, render_fixes, suggest_fixes
+        diff_text = _read_diff(None, args.dir, args.base)
+        if diff_text is None:
+            print("ERROR: 无法获取 diff (不是 git 仓库?)", file=sys.stderr)
+            return 2
+        fixes = suggest_fixes(diff_text)
+        if args.apply:
+            applied, errors = apply_fixes(args.dir, fixes)
+            print(f"落地 {applied} 条自动修复" + (f", {len(errors)} 条跳过" if errors else ""))
+            for e in errors:
+                print(f"  ⚠ {e}")
+            if args.check:
+                # 落地后复扫验证: 对比工作区 (修复在未提交状态, 不能用 --base 看旧提交)
+                import subprocess as _sp
+                rc = _sp.run(["code-guard", "check", "--dir", args.dir, "--no-ledger"],
+                             capture_output=True, text=True)
+                print("=== 复扫验证 (工作区 diff) ===")
+                print(rc.stdout[-400:] if rc.stdout else rc.stderr[-400:])
+                return 0 if rc.returncode == 0 else 1
+            return 0
+        print(render_fixes(fixes))
         return 0
     return 2
 
