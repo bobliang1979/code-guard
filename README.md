@@ -56,7 +56,10 @@ pip install https://github.com/bobliang1979/code-guard/releases/download/v0.2.0/
 git clone https://github.com/bobliang1979/code-guard.git
 cd code-guard && pip install .
 
-# PyPI: 名称已保留, 自动发布 workflow 已就绪 (push v* tag 即发布, 需 secrets.PYPI_TOKEN)
+# PyPI: 名称已保留。发布支持两种方式:
+#  A. Trusted Publishing (OIDC, 免 token 推荐): PyPI → 项目页 → Publishing → Add pending publisher
+#     (GitHub owner: bobliang1979 / Repository: code-guard / Workflow: publish-pypi.yml), 配置一次后永久自动发布
+#  B. API token: 仓库 Settings → Secrets → 添加 PYPI_TOKEN, push v* tag 即自动发布
 ```
 
 ## 用法
