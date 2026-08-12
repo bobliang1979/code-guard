@@ -35,7 +35,7 @@ runs:
       shell: bash
       run: |
         # 用 action 自带源码安装 (零版本漂移): $GITHUB_ACTION_PATH 由 runner 注入,
-        # 指向当前引用的 action 目录。企业用 @v0.1 装 v0.1 代码, 自测用 ./ 装工作区代码。
+        # 指向当前引用的 action 目录。企业用 @v0.2.0 装 v0.2.0 代码, 自测用 ./ 装工作区代码。
         pip install --quiet "$GITHUB_ACTION_PATH"
         code-guard --version 2>/dev/null || code-guard demo >/dev/null
 

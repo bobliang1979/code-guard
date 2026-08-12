@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "code-guard"
-version = "0.1.0"
+version = "0.2.0"
 description = "编码代理安全护栏 — 拦截 LLM 生成代码中的危险模式/回归/假PASS。CI 一条命令接入。"
 readme = "README.md"
 requires-python = ">=3.9"

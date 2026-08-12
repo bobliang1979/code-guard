@@ -37,7 +37,7 @@ code-guard check --dir . --base HEAD~1 --llm-review
 GitHub Actions (需配置 secret):
 
 ```yaml
-- uses: bobliang1979/code-guard@v0.1
+- uses: bobliang1979/code-guard@v0.2.0
   with:
     llm-review: 'true'
   env:
@@ -85,7 +85,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0          # 浅克隆自愈由 action 内部处理, 但全量更稳
-      - uses: bobliang1979/code-guard@v0.1
+      - uses: bobliang1979/code-guard@v0.2.0
         with:
           require-tests: 'true'   # 严格模式: 生产改动必须带测试
 ```
