@@ -19,6 +19,10 @@ inputs:
     description: '把本次测试失败数存为 baseline (首次接入建议 true)'
     required: false
     default: 'false'
+  include-tests:
+    description: '静态门也扫描测试文件 (默认跳过 — 测试常含故意构造样例)'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -44,6 +48,7 @@ runs:
         EXTRA=""
         if [ "${{ inputs.require-tests }}" = "true" ]; then EXTRA="$EXTRA --require-tests"; fi
         if [ "${{ inputs.update-baseline }}" = "true" ]; then EXTRA="$EXTRA --update-baseline"; fi
+        if [ "${{ inputs.include-tests }}" = "true" ]; then EXTRA="$EXTRA --include-tests"; fi
         # 注意: --base 值直接内联, 不能放进变量再展开 (引号会被当字面字符)
         code-guard check --dir . --base "${{ inputs.base }}" --timeout ${{ inputs.timeout }} $EXTRA
 

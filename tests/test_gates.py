@@ -29,6 +29,18 @@ def test_static_gate_medium_only_is_pass():
     assert r.status == "PASS"  # MEDIUM 不阻断
 
 
+def test_static_gate_skips_test_files_by_default():
+    """测试文件里的危险样例默认跳过 (bandit/forge 惯例) — 实战 code-guard 自扫教训。"""
+    diff = """+++ b/test_evil.py
+@@ -1,1 +1,2 @@
++    eval(user_input)
+"""
+    r = static_gate(diff)
+    assert r.status == "PASS"
+    r2 = static_gate(diff, include_tests=True)
+    assert r2.status == "FAIL"
+
+
 def test_fake_pass_gate_no_tests():
     diff = """+++ b/app.py
 @@ -1,1 +1,2 @@

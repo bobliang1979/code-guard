@@ -72,9 +72,15 @@ def _run(cmd: List[str], cwd: str, timeout: int = 120) -> tuple:
         return -2, f"命令不存在: {cmd[0]}"
 
 
-def static_gate(diff_text: str) -> GateResult:
-    """静态安全门: BLOCKER/HIGH 任一 -> FAIL。"""
+def static_gate(diff_text: str, include_tests: bool = False) -> GateResult:
+    """静态安全门: BLOCKER/HIGH 任一 -> FAIL。
+
+    include_tests=False (默认): 跳过测试文件 — 测试常含故意构造的危险样例
+    (验证检测器/mock), 且不进入生产。bandit/forge 同惯例。
+    """
     findings = scan_diff(diff_text)
+    if not include_tests:
+        findings = [f for f in findings if not _TEST_FILE_RE.search(f.file)]
     blockers = [f for f in findings if f.severity in (BLOCKER, HIGH)]
     if blockers:
         detail = f"{len(blockers)} 处高危命中: " + "; ".join(
@@ -151,10 +157,11 @@ def fake_pass_gate(diff_text: str, require_tests: bool = False) -> GateResult:
 
 
 def run_all(diff_text: str, repo_dir: str, require_tests: bool = False,
-            timeout: int = 120, baseline: Optional[dict] = None) -> dict:
+            timeout: int = 120, baseline: Optional[dict] = None,
+            include_tests: bool = False) -> dict:
     """执行全部门禁, 返回报告 dict。"""
     gates = [
-        static_gate(diff_text),
+        static_gate(diff_text, include_tests),
         test_gate(repo_dir, diff_text, timeout, baseline),
         fake_pass_gate(diff_text, require_tests),
     ]

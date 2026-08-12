@@ -80,6 +80,8 @@ def _build_parser() -> argparse.ArgumentParser:
     check.add_argument("--json", action="store_true", help="输出 JSON 报告")
     check.add_argument("--require-tests", action="store_true",
                        help="严格模式: 生产代码改动必须带测试, 否则 BLOCK")
+    check.add_argument("--include-tests", action="store_true",
+                       help="静态门也扫描测试文件 (默认跳过 — 测试常含故意构造样例)")
     check.add_argument("--update-baseline", action="store_true",
                        help="把本次测试失败数存为 baseline 供下次对比")
     check.add_argument("--timeout", type=int, default=120, help="测试超时秒数")
@@ -107,7 +109,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         baseline = load_baseline(args.dir) if not args.update_baseline else None
         report = run_all(diff_text, args.dir,
                          require_tests=args.require_tests,
-                         timeout=args.timeout, baseline=baseline)
+                         timeout=args.timeout, baseline=baseline,
+                         include_tests=args.include_tests)
         if args.update_baseline:
             save_baseline(args.dir, report)
         out = json.dumps(report, ensure_ascii=False, indent=2) if args.json else _render_text(report)

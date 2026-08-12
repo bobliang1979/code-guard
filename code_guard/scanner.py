@@ -33,29 +33,30 @@ PATTERNS: List[tuple] = [
 
     # --- 代码注入/危险执行 (BLOCKER) ---
     # (?<!["']) 排除字符串字面量内的模式 (如 BLOCKED_PATTERNS=["eval("] 黑名单定义, 非真实调用)
+    # \b 前缀排除规则源码自身 (如 r"\beval(" 中 b 和 e 之间无边界)
     (re.compile(r"(?<![\"'])\beval\s*\("), BLOCKER, "eval() — 代码注入风险, 用 ast.literal_eval()"),
     (re.compile(r"(?<![\"'])\bexec\s*\("), BLOCKER, "exec() — 代码注入风险, 需人工审查"),
-    (re.compile(r"(?<![\"'])os\.system\s*\("), HIGH, "os.system() — 命令注入风险, 用 subprocess.run(shell=False)"),
-    (re.compile(r"(?<![\"'])subprocess\.(call|run|Popen)\s*\([^)]*shell\s*=\s*True"), HIGH,
+    (re.compile(r"(?<![\"'])\bos\.system\s*\("), HIGH, "os.system() — 命令注入风险, 用 subprocess.run(shell=False)"),
+    (re.compile(r"(?<![\"'])\bsubprocess\.(call|run|Popen)\s*\([^)]*shell\s*=\s*True"), HIGH,
      "subprocess shell=True — 命令注入风险, 传参数列表"),
-    (re.compile(r"(?<![\"'])os\.popen\s*\("), HIGH, "os.popen() — 命令注入风险"),
-    (re.compile(r"(?<![\"'])child_process\.(exec|execSync|spawn|spawnSync)\s*\(\s*[`'\"]"), HIGH,
+    (re.compile(r"(?<![\"'])\bos\.popen\s*\("), HIGH, "os.popen() — 命令注入风险"),
+    (re.compile(r"(?<![\"'])\bchild_process\.(exec|execSync|spawn|spawnSync)\s*\(\s*[`'\"]"), HIGH,
      "Node child_process 拼接命令 — 注入风险, 用 execFile"),
 
     # --- 不安全反序列化 (HIGH) ---
-    (re.compile(r"(?<![\"'])pickle\.(load|loads)\s*\("), HIGH, "pickle 反序列化 — 任意代码执行风险, 用 JSON"),
-    (re.compile(r"(?<![\"'])yaml\.load\s*\([^)]*Loader"), HIGH, "yaml.load 未指定 SafeLoader — 反序列化风险"),
-    (re.compile(r"(?<![\"'])marshal\.loads?\s*\("), HIGH, "marshal 反序列化 — 不安全"),
+    (re.compile(r"(?<![\"'])\bpickle\.(load|loads)\s*\("), HIGH, "pickle 反序列化 — 任意代码执行风险, 用 JSON"),
+    (re.compile(r"(?<![\"'])\byaml\.load\s*\([^)]*Loader"), HIGH, "yaml.load 未指定 SafeLoader — 反序列化风险"),
+    (re.compile(r"(?<![\"'])\bmarshal\.loads?\s*\("), HIGH, "marshal 反序列化 — 不安全"),
 
     # --- SQL 注入 (BLOCKER) ---
-    (re.compile(r"""(?i)(?<![\"'])execute\s*\(\s*f["']"""), BLOCKER, "SQL f-string 拼接 — 注入风险, 用参数化查询"),
-    (re.compile(r"""(?i)(?<![\"'])(execute|executemany|query)\s*\(\s*["'][^"']*(\{|%s|%\(|\+)"""),
+    (re.compile(r"""(?i)(?<![\"'])\bexecute\s*\(\s*f["']"""), BLOCKER, "SQL f-string 拼接 — 注入风险, 用参数化查询"),
+    (re.compile(r"""(?i)(?<![\"'])\b(execute|executemany|query)\s*\(\s*["'][^"']*(\{|%s|%\(|\+)"""),
      BLOCKER, "SQL 字符串拼接 — 注入风险, 用参数化查询"),
 
     # --- XSS (JS/TS) (HIGH) ---
-    (re.compile(r"(?<![\"'])\.innerHTML\s*="), HIGH, "innerHTML 赋值 — XSS 风险, 用 textContent"),
-    (re.compile(r"(?<![\"'])document\.write\s*\("), HIGH, "document.write — XSS 风险"),
-    (re.compile(r"(?<![\"'])dangerouslySetInnerHTML"), HIGH, "React dangerouslySetInnerHTML — XSS 风险"),
+    (re.compile(r"(?<![\"'])\binnerHTML\s*="), HIGH, "innerHTML 赋值 — XSS 风险, 用 textContent"),
+    (re.compile(r"(?<![\"'])\bdocument\.write\s*\("), HIGH, "document.write — XSS 风险"),
+    (re.compile(r"(?<![\"'])\bdangerouslySetInnerHTML"), HIGH, "React XSS 属性 — 用 textContent"),
 
     # --- TLS/安全配置 (MEDIUM) ---
     (re.compile(r"verify\s*=\s*False"), MEDIUM, "SSL 验证被禁用 (verify=False)"),
