@@ -1,5 +1,5 @@
 name: 'code-guard'
-description: '编码代理安全护栏 — 拦截 LLM 编码代理(Cursor/Claude Code/Codex)提交的危险代码。三扇门: 静态安全/测试回归/假PASS拦截。'
+description: '编码代理安全护栏 — 拦截 LLM 编码代理(Cursor/Claude Code/Codex)提交的危险代码。静态安全/测试回归/假PASS拦截/LLM评审/自动修复。CI 一行接入, 零依赖。'
 author: 'bobliang1979'
 
 inputs:
