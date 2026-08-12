@@ -41,10 +41,11 @@ runs:
     - name: 'Run gates'
       shell: bash
       run: |
-        ARGS="--dir . --base '${{ inputs.base }}' --timeout ${{ inputs.timeout }}"
-        if [ "${{ inputs.require-tests }}" = "true" ]; then ARGS="$ARGS --require-tests"; fi
-        if [ "${{ inputs.update-baseline }}" = "true" ]; then ARGS="$ARGS --update-baseline"; fi
-        code-guard check $ARGS
+        EXTRA=""
+        if [ "${{ inputs.require-tests }}" = "true" ]; then EXTRA="$EXTRA --require-tests"; fi
+        if [ "${{ inputs.update-baseline }}" = "true" ]; then EXTRA="$EXTRA --update-baseline"; fi
+        # 注意: --base 值直接内联, 不能放进变量再展开 (引号会被当字面字符)
+        code-guard check --dir . --base "${{ inputs.base }}" --timeout ${{ inputs.timeout }} $EXTRA
 
 branding:
   icon: 'shield'
