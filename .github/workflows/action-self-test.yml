@@ -36,8 +36,11 @@ jobs:
       - name: Verify CLI blocks evil code
         run: |
           pip install --quiet "git+https://github.com/bobliang1979/code-guard.git"
+          # bash -e 下命令失败会直接退出, 必须捕获退出码
+          set +e
           code-guard check --dir . --base origin/main > /tmp/cg.log 2>&1
           rc=$?
+          set -e
           if [ $rc -eq 1 ] && grep -q "verdict: BLOCK" /tmp/cg.log; then
             echo "✅ CLI 拦截坏代码 (rc=$rc, verdict=BLOCK)"
           else
