@@ -1,0 +1,35 @@
+name: publish-pypi
+
+# 触发: push v* tag (如 v0.2.0)。需先在仓库设置 secrets.PYPI_TOKEN
+# (PyPI API token: https://pypi.org/manage/account/token/, 权限选 "Upload packages")
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # 可选: 用 trusted publishing 替代 token
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build sdist + wheel
+        run: |
+          pip install build
+          python -m build
+      - name: Test wheel in clean venv
+        run: |
+          python -m venv /tmp/wt
+          /tmp/wt/bin/pip install dist/*.whl
+          /tmp/wt/bin/code-guard demo | tail -1
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          pip install twine
+          twine upload --non-interactive dist/*

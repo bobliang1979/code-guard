@@ -56,7 +56,7 @@ pip install https://github.com/bobliang1979/code-guard/releases/download/v0.2.0/
 git clone https://github.com/bobliang1979/code-guard.git
 cd code-guard && pip install .
 
-# PyPI 发布后: pip install code-guard
+# PyPI: 名称已保留, 自动发布 workflow 已就绪 (push v* tag 即发布, 需 secrets.PYPI_TOKEN)
 ```
 
 ## 用法
