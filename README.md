@@ -111,6 +111,19 @@ code-guard check --dir . --update-baseline   # 记录当前失败数为基线
 - **测试文件默认跳过**: 静态门跳过 test_*/tests//spec/__tests__ 文件 — 测试常含故意构造的危险样例 (验证检测器/mock), 且不进入生产。需扫描用 `--include-tests`。
 - **字符串数据误报已缓解**: 规则排除字符串字面量内模式 (`BLOCKED_PATTERNS=["eval("]` 黑名单定义不误报, 实战 trauma-driven-agent 验证) + `\b` 前缀排除规则源码自命中 (code-guard 可自扫)。
 
+## 自动修复建议 (v0.2)
+
+确定性安全替换 (正则驱动, 非 LLM), 只改可安全变换的:
+
+```bash
+code-guard fix --dir . --base HEAD~1          # 只显示建议
+code-guard fix --dir . --base HEAD~1 --apply  # 落地 HIGH 置信度修复
+code-guard fix --dir . --apply --check        # 落地后自动复扫验证
+```
+
+可自动修复: `eval(x)`→`ast.literal_eval(x)` / `os.system("字面量")`→`subprocess.run([...], shell=False)` / 移除 `shell=True`。
+需人工 (标记 MANUAL): 硬编码密钥、参数非字面量的危险调用 (无法确定性替换, 绝不生成错误代码)。
+
 ## 失败归因账本 (v0.5)
 
 每次 `check` 自动记录到 `<repo>/.code-guard/ledger.jsonl` (写失败不阻断)。聚合统计帮助企业看到跨 PR 的失败模式:
@@ -127,10 +140,10 @@ code-guard stats --dir . --days 7     # 最近 7 天
 ## 路线图
 
 - [x] v0.1 三扇门 MVP (静态/测试/假PASS)
+- [x] v0.2 自动修复建议 (确定性安全替换 + 落地复扫闭环)
 - [x] v0.3 GitHub Actions composite action 一行接入
 - [x] v0.4 LLM 独立评审门 (逻辑/安全问题, 可选启用)
 - [x] v0.5 失败归因账本 (跨 PR 失败模式统计)
-- [ ] v0.2 自动修复建议 (安全替换: eval→literal_eval, os.system→subprocess)
 
 ## 测试
 
