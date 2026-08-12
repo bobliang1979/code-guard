@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: |
+          pip install pytest
+          pip install -e .
+      - name: Unit tests
+        run: python -m pytest tests/ -q
+      - name: Built-in demo (scanner self-check)
+        run: code-guard demo
+      - name: End-to-end (bad PR must BLOCK)
+        run: |
+          mkdir -p /tmp/e2e && cd /tmp/e2e
+          git init -q && git config user.email ci@ci && git config user.name ci
+          echo "def ok(): return 1" > app.py
+          git add -A && git commit -qm base
+          printf 'import os\ndef p(u):\n    os.system("rm -rf " + u)\n    return eval(u)\n' > app.py
+          git add -A && git commit -qm bad
+          code-guard check --dir . --base HEAD~1 --json | grep -q '"verdict": "BLOCK"' && echo "E2E BLOCK OK"
