@@ -58,6 +58,13 @@ PATTERNS: List[tuple] = [
     (re.compile(r"(?<![\"'])\bdocument\.write\s*\("), HIGH, "document.write — XSS 风险"),
     (re.compile(r"(?<![\"'])\bdangerouslySetInnerHTML"), HIGH, "React XSS 属性 — 用 textContent"),
 
+    # --- 路径穿越 (BLOCKER) — 自然编码实测发现 (URL 当文件名, .. 未过滤) ---
+    (re.compile(r"url\.replace\([^)]*[/\\\\]|\bslugify\s*\("), BLOCKER,
+     "URL/文件名拼路径未防穿越 — 用 basename+白名单"),
+    (re.compile(r'join\s*\(\s*[^)]*\.replace\([^)]*[/\\]'), BLOCKER,
+     "用户输入拼路径 — 路径穿越风险"),
+    (re.compile(r'open\s*\(\s*f["\']'), HIGH, "f-string 拼文件路径 — 路径穿越风险"),
+
     # --- TLS/安全配置 (MEDIUM) ---
     (re.compile(r"verify\s*=\s*False"), MEDIUM, "SSL 验证被禁用 (verify=False)"),
     (re.compile(r"(?i)ssl_verify\s*=\s*False|insecure\s*=\s*True|allow_insecure"), MEDIUM, "TLS 校验关闭"),

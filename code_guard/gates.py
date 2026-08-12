@@ -175,7 +175,7 @@ def run_all(diff_text: str, repo_dir: str, require_tests: bool = False,
         gates.append(_llm_review(diff_text, static_findings))
     failed = [g for g in gates if g.status == "FAIL"]
     report = {
-        "version": "0.2.0",
+        "version": "0.2.1",
         "verdict": "BLOCK" if failed else "PASS",
         "gates": [g.to_dict() for g in gates],
         "summary": "; ".join(f"{g.name}={g.status}" for g in gates),

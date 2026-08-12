@@ -101,3 +101,25 @@ def test_real_call_still_detected_after_literal_filter():
 """
     findings = scan_diff(diff)
     assert len(findings) == 3, f"got {findings}"
+
+
+def test_path_traversal_url_as_filename():
+    """自然编码实测: URL 当文件名拼路径未防穿越 -> BLOCKER (LLM 自然犯错案例)。"""
+    code = '''class DownloadCache:
+    def _cache_key(self, url):
+        return self.cache_dir / url.replace("/", "_").replace(":", "_")
+'''
+    findings = scan_code(code)
+    assert any(f.severity == "BLOCKER" and "穿越" in f.message for f in findings), \
+        f"got {findings}"
+
+
+def test_path_traversal_open_fstring():
+    """open(f"...{user_input}") f-string 拼路径 -> HIGH。"""
+    code = '''def load(name):
+    with open(f"/data/{name}") as f:
+        return f.read()
+'''
+    findings = scan_code(code)
+    assert any(f.severity == "HIGH" and "穿越" in f.message for f in findings), \
+        f"got {findings}"
