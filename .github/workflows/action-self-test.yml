@@ -30,18 +30,16 @@ jobs:
           git checkout -b evil-test
           printf 'import os\ndef p(u):\n    os.system("rm -rf " + u)\n    return eval(u)\n' > evil.py
           git add evil.py && git commit -qm "evil"
-      - uses: ./
-        continue-on-error: true
-        with:
-          base: origin/main
-      # 注意: 不读 steps.*.outcome (composite action+continue-on-error 下不可靠)
-      # 只做手动复跑: rc=1 且 verdict=BLOCK 才算真拦截
-      - name: Verify BLOCK
+      # action 拦截坏代码: 期望失败 (verdict=BLOCK)。
+      # composite action 内部失败 + continue-on-error 的 outcome 不可靠,
+      # 所以用 CLI 等价验证 (action 只是 CLI 的薄封装, 可用性由 guard-clean 证明)
+      - name: Verify CLI blocks evil code
         run: |
+          pip install --quiet "git+https://github.com/bobliang1979/code-guard.git"
           code-guard check --dir . --base origin/main > /tmp/cg.log 2>&1
           rc=$?
           if [ $rc -eq 1 ] && grep -q "verdict: BLOCK" /tmp/cg.log; then
-            echo "✅ action 成功 BLOCK 坏代码 (rc=$rc, verdict=BLOCK)"
+            echo "✅ CLI 拦截坏代码 (rc=$rc, verdict=BLOCK)"
           else
-            echo "❌ action 未拦截 (rc=$rc):" && cat /tmp/cg.log && exit 1
+            echo "❌ CLI 未拦截 (rc=$rc):" && cat /tmp/cg.log && exit 1
           fi
