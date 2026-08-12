@@ -1,0 +1,51 @@
+name: 'code-guard'
+description: '编码代理安全护栏 — 拦截 LLM 编码代理(Cursor/Claude Code/Codex)提交的危险代码。三扇门: 静态安全/测试回归/假PASS拦截。'
+author: 'bobliang1979'
+
+inputs:
+  base:
+    description: 'git 基线 ref, 对比 base..HEAD (默认: PR base sha)'
+    required: false
+    default: ${{ github.event.pull_request.base.sha }}
+  require-tests:
+    description: '严格模式: 生产代码改动必须带测试, 否则 BLOCK'
+    required: false
+    default: 'false'
+  timeout:
+    description: '测试超时秒数'
+    required: false
+    default: '120'
+  update-baseline:
+    description: '把本次测试失败数存为 baseline (首次接入建议 true)'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Install code-guard'
+      shell: bash
+      run: |
+        pip install --quiet "git+https://github.com/bobliang1979/code-guard.git@v0.1"
+        code-guard --version 2>/dev/null || code-guard demo >/dev/null
+
+    - name: 'Fetch base ref (shallow-clone self-heal)'
+      shell: bash
+      run: |
+        BASE="${{ inputs.base }}"
+        if ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+          echo "base $BASE 不在本地 (浅克隆), 尝试 fetch..."
+          git fetch --quiet origin "$BASE" --depth=1 || git fetch --quiet --unshallow
+        fi
+
+    - name: 'Run gates'
+      shell: bash
+      run: |
+        ARGS="--dir . --base '${{ inputs.base }}' --timeout ${{ inputs.timeout }}"
+        if [ "${{ inputs.require-tests }}" = "true" ]; then ARGS="$ARGS --require-tests"; fi
+        if [ "${{ inputs.update-baseline }}" = "true" ]; then ARGS="$ARGS --update-baseline"; fi
+        code-guard check $ARGS
+
+branding:
+  icon: 'shield'
+  color: 'red'

@@ -1,5 +1,8 @@
 # code-guard — 编码代理安全护栏
 
+[![CI](https://github.com/bobliang1979/code-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/bobliang1979/code-guard/actions)
+[![License](https://img.shields.io/github/license/bobliang1979/code-guard)](LICENSE)
+
 拦截 LLM 编码代理 (Cursor/Claude Code/Codex) 提交的危险代码。CI 一条命令接入，零依赖。
 
 ## 为什么存在
@@ -46,14 +49,24 @@ code-guard demo
 
 退出码: `0`=PASS, `1`=BLOCK, `2`=ERROR (CI 直接 `exit $?` 即可门禁)。
 
-## CI 接入 (GitHub Actions)
+## CI 接入 (GitHub Actions — 企业推荐, 一行引用)
 
 ```yaml
-- name: code-guard
-  run: |
-    pip install code-guard
-    code-guard check --dir . --base ${{ github.event.pull_request.base.sha }} --require-tests
+name: code-guard
+on: [pull_request]
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # 浅克隆自愈由 action 内部处理, 但全量更稳
+      - uses: bobliang1979/code-guard@v0.1
+        with:
+          require-tests: 'true'   # 严格模式: 生产改动必须带测试
 ```
+
+参数: `base`(默认 PR base sha) / `require-tests` / `timeout` / `update-baseline`(首次接入建议 true)。
 
 ## Baseline (只拦新增回归)
 
