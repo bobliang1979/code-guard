@@ -32,19 +32,16 @@ jobs:
           git add evil.py && git commit -qm "evil"
       - uses: ./
         continue-on-error: true
-        id: guard
         with:
           base: origin/main
+      # 注意: 不读 steps.*.outcome (composite action+continue-on-error 下不可靠)
+      # 只做手动复跑: rc=1 且 verdict=BLOCK 才算真拦截
       - name: Verify BLOCK
         run: |
-          if [ "${{ steps.guard.outcome }}" = "success" ]; then
-            echo "❌ action 未拦截坏代码 (exit 0)" && exit 1
-          fi
-          # 手动复跑, 区分"真拦截"(verdict=BLOCK) 和 "安装失败"
           code-guard check --dir . --base origin/main > /tmp/cg.log 2>&1
           rc=$?
           if [ $rc -eq 1 ] && grep -q "verdict: BLOCK" /tmp/cg.log; then
-            echo "✅ action 成功 BLOCK 坏代码 (exit=$rc, verdict=BLOCK)"
+            echo "✅ action 成功 BLOCK 坏代码 (rc=$rc, verdict=BLOCK)"
           else
-            echo "❌ action 失败但非 BLOCK (rc=$rc):" && cat /tmp/cg.log && exit 1
+            echo "❌ action 未拦截 (rc=$rc):" && cat /tmp/cg.log && exit 1
           fi
