@@ -58,7 +58,11 @@ def _render_text(report: dict) -> str:
     for g in report["gates"]:
         lines.append(f"  [{g['status']:<4}] {g['name']}: {g['detail']}")
         for f in g.get("findings", [])[:10]:
-            lines.append(f"         {f['file']}:{f['line']} [{f['severity']}] {f['message']}")
+            # findings 可能是 Finding dict (severity/message) 或 LLM issue dict (type/desc)
+            if "severity" in f:
+                lines.append(f"         {f['file']}:{f['line']} [{f['severity']}] {f['message']}")
+            else:
+                lines.append(f"         [{f.get('type','?')}] {f.get('file','?')}:{f.get('line','?')} {f.get('desc','')}")
         if len(g.get("findings", [])) > 10:
             lines.append(f"         ... 共 {len(g['findings'])} 处")
     lines.append(f"summary: {report['summary']}")
@@ -82,6 +86,8 @@ def _build_parser() -> argparse.ArgumentParser:
                        help="严格模式: 生产代码改动必须带测试, 否则 BLOCK")
     check.add_argument("--include-tests", action="store_true",
                        help="静态门也扫描测试文件 (默认跳过 — 测试常含故意构造样例)")
+    check.add_argument("--llm-review", action="store_true",
+                       help="启用 LLM 独立评审门 (找静态扫描器漏掉的逻辑/安全问题; API 不可用自动 SKIP)")
     check.add_argument("--update-baseline", action="store_true",
                        help="把本次测试失败数存为 baseline 供下次对比")
     check.add_argument("--timeout", type=int, default=120, help="测试超时秒数")
@@ -110,7 +116,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         report = run_all(diff_text, args.dir,
                          require_tests=args.require_tests,
                          timeout=args.timeout, baseline=baseline,
-                         include_tests=args.include_tests)
+                         include_tests=args.include_tests,
+                         llm_review=args.llm_review)
         if args.update_baseline:
             save_baseline(args.dir, report)
         out = json.dumps(report, ensure_ascii=False, indent=2) if args.json else _render_text(report)

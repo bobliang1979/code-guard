@@ -158,13 +158,18 @@ def fake_pass_gate(diff_text: str, require_tests: bool = False) -> GateResult:
 
 def run_all(diff_text: str, repo_dir: str, require_tests: bool = False,
             timeout: int = 120, baseline: Optional[dict] = None,
-            include_tests: bool = False) -> dict:
-    """执行全部门禁, 返回报告 dict。"""
+            include_tests: bool = False,
+            llm_review: bool = False) -> dict:
+    """执行全部门禁, 返回报告 dict。llm_review=True 时启用第四扇门 (可选, SKIP 不阻断)。"""
     gates = [
         static_gate(diff_text, include_tests),
         test_gate(repo_dir, diff_text, timeout, baseline),
         fake_pass_gate(diff_text, require_tests),
     ]
+    if llm_review:
+        from .llm_review import llm_review as _llm_review
+        static_findings = scan_diff(diff_text)
+        gates.append(_llm_review(diff_text, static_findings))
     failed = [g for g in gates if g.status == "FAIL"]
     report = {
         "version": "0.1.0",

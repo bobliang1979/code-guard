@@ -23,6 +23,10 @@ inputs:
     description: '静态门也扫描测试文件 (默认跳过 — 测试常含故意构造样例)'
     required: false
     default: 'false'
+  llm-review:
+    description: '启用 LLM 独立评审门 (需 DEEPSEEK_API_KEY/OPENAI_API_KEY secret; API 不可用自动 SKIP)'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -51,6 +55,7 @@ runs:
         if [ "${{ inputs.require-tests }}" = "true" ]; then EXTRA="$EXTRA --require-tests"; fi
         if [ "${{ inputs.update-baseline }}" = "true" ]; then EXTRA="$EXTRA --update-baseline"; fi
         if [ "${{ inputs.include-tests }}" = "true" ]; then EXTRA="$EXTRA --include-tests"; fi
+        if [ "${{ inputs.llm-review }}" = "true" ]; then EXTRA="$EXTRA --llm-review"; fi
         # 注意: --base 值直接内联, 不能放进变量再展开 (引号会被当字面字符)
         code-guard check --dir . --base "${{ inputs.base }}" --timeout ${{ inputs.timeout }} $EXTRA
 
