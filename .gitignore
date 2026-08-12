@@ -11,6 +11,7 @@ venv/
 .pytest_cache/
 .coverage
 .code-guard-baseline.json
+.code-guard/
 
 # 系统
 .DS_Store

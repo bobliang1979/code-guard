@@ -111,12 +111,26 @@ code-guard check --dir . --update-baseline   # 记录当前失败数为基线
 - **测试文件默认跳过**: 静态门跳过 test_*/tests//spec/__tests__ 文件 — 测试常含故意构造的危险样例 (验证检测器/mock), 且不进入生产。需扫描用 `--include-tests`。
 - **字符串数据误报已缓解**: 规则排除字符串字面量内模式 (`BLOCKED_PATTERNS=["eval("]` 黑名单定义不误报, 实战 trauma-driven-agent 验证) + `\b` 前缀排除规则源码自命中 (code-guard 可自扫)。
 
+## 失败归因账本 (v0.5)
+
+每次 `check` 自动记录到 `<repo>/.code-guard/ledger.jsonl` (写失败不阻断)。聚合统计帮助企业看到跨 PR 的失败模式:
+
+```bash
+code-guard stats --dir .              # 全部历史
+code-guard stats --dir . --days 7     # 最近 7 天
+# 输出: verdict 分布 / 门状态 / 高频失败模式 Top10
+# 例: 3 个 PR 都因 eval() 被拦 -> 反哺改进 LLM 代理提示词
+```
+
+账本文件已被 .gitignore 排除 (本地数据, 不进仓库)。
+
 ## 路线图
 
-- [ ] v0.2: 自动修复建议 (安全替换: eval→literal_eval, os.system→subprocess)
-- [ ] v0.3: GitHub App 形态 (PR 评论 + required check)
-- [ ] v0.4: LLM 独立评审门 (多模型交叉评审 diff, 可选启用)
-- [ ] v0.5: 失败归因账本 (跨 PR 统计代理失败模式)
+- [x] v0.1 三扇门 MVP (静态/测试/假PASS)
+- [x] v0.3 GitHub Actions composite action 一行接入
+- [x] v0.4 LLM 独立评审门 (逻辑/安全问题, 可选启用)
+- [x] v0.5 失败归因账本 (跨 PR 失败模式统计)
+- [ ] v0.2 自动修复建议 (安全替换: eval→literal_eval, os.system→subprocess)
 
 ## 测试
 

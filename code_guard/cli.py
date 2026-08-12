@@ -92,6 +92,14 @@ def _build_parser() -> argparse.ArgumentParser:
                        help="把本次测试失败数存为 baseline 供下次对比")
     check.add_argument("--timeout", type=int, default=120, help="测试超时秒数")
 
+    check.add_argument("--no-ledger", action="store_true",
+                       help="不写入失败归因账本 (默认自动记录到 .code-guard/ledger.jsonl)")
+
+    stats = sub.add_parser("stats", help="失败归因账本统计 (跨 PR 失败模式)")
+    stats.add_argument("--dir", default=".", help="仓库根目录 (默认当前目录)")
+    stats.add_argument("--days", type=int, default=None,
+                       help="只看最近 N 天 (默认全部)")
+
     sub.add_parser("demo", help="内嵌演示 (扫描器自测)")
     return p
 
@@ -120,9 +128,16 @@ def main(argv: Optional[List[str]] = None) -> int:
                          llm_review=args.llm_review)
         if args.update_baseline:
             save_baseline(args.dir, report)
+        if not args.no_ledger:
+            from .ledger import record
+            record(report, args.dir, base=args.base or "")
         out = json.dumps(report, ensure_ascii=False, indent=2) if args.json else _render_text(report)
         print(out)
         return 0 if report["verdict"] == "PASS" else 1
+    if args.command == "stats":
+        from .ledger import render_stats, stats as _stats
+        print(render_stats(_stats(args.dir, args.days), args.days))
+        return 0
     return 2
 
 
