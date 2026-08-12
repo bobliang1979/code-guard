@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "code-guard"
+version = "0.1.0"
+description = "编码代理安全护栏 — 拦截 LLM 生成代码中的危险模式/回归/假PASS。CI 一条命令接入。"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "bobliang1979" }]
+keywords = ["code-review", "security", "llm", "ci", "guard"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.scripts]
+code-guard = "code_guard.cli:main"
+
+[tool.setuptools]
+packages = ["code_guard"]

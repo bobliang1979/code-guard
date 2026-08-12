@@ -1,0 +1,10 @@
+pyproject.toml
+code_guard/__init__.py
+code_guard/cli.py
+code_guard/gates.py
+code_guard/scanner.py
+code_guard.egg-info/PKG-INFO
+code_guard.egg-info/SOURCES.txt
+code_guard.egg-info/dependency_links.txt
+code_guard.egg-info/entry_points.txt
+code_guard.egg-info/top_level.txt

@@ -1,0 +1,2 @@
+[console_scripts]
+code-guard = code_guard.cli:main
