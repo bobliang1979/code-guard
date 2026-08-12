@@ -12,15 +12,39 @@ LLM 代理生成代码的三大痛点：
 2. **测试回归** — 声称"测试通过"实际破坏了存量测试
 3. **假 PASS** — 改了生产代码但测试零改动就提交 (LLM 代理典型作弊路径)
 
-## 三扇门
+## 四扇门
 
 | 门 | 判定 | 默认 |
 |---|------|------|
 | **static** 静态安全门 | 新增行含 BLOCKER/HIGH 危险模式 | BLOCK |
 | **tests** 测试回归门 | 跑测试，与 baseline 对比只拦新增失败 | BLOCK |
 | **coverage** 假PASS拦截门 | 生产代码改动但测试零改动 | WARN (可 --require-tests 升级 BLOCK) |
+| **llm** LLM独立评审门 (v0.4) | 找静态扫描器漏掉的逻辑/安全问题 | 关闭 (--llm-review 启用) |
 
 核心设计: **只扫 diff 新增行** (非全库) — 零存量噪音，CI 友好，跨语言 (Python/JS/TS/Go/SQL)。
+
+## LLM 独立评审门 (v0.4)
+
+静态正则找不到逻辑错误 (条件反转/边界/竞态) — 这是 LLM 门的独特价值。实测案例: 静态门 PASS 的折扣逻辑 bug 被 LLM 门拦截。
+
+```bash
+# 本地
+code-guard check --dir . --base HEAD~1 --llm-review
+# 环境变量: DEEPSEEK_API_KEY 或 OPENAI_API_KEY (任意 OpenAI 兼容 provider)
+# 可选: LLM_BASE_URL (默认 https://api.deepseek.com), LLM_MODEL (默认 deepseek-chat)
+```
+
+GitHub Actions (需配置 secret):
+
+```yaml
+- uses: bobliang1979/code-guard@v0.1
+  with:
+    llm-review: 'true'
+  env:
+    DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+```
+
+fail-closed 语义: LLM 报 LOGIC/SECURITY 问题 → BLOCK; API 不可用/超时/解析失败 → SKIP (不阻断 CI)。
 
 ## 安装
 
