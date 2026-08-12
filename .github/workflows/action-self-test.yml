@@ -35,8 +35,7 @@ jobs:
       # 所以用 CLI 等价验证 (action 只是 CLI 的薄封装, 可用性由 guard-clean 证明)
       - name: Verify CLI blocks evil code
         run: |
-          pip install --quiet "git+https://github.com/bobliang1979/code-guard.git"
-          # bash -e 下命令失败会直接退出, 必须捕获退出码
+          pip install --quiet .   # 当前 checkout 即 code-guard 源码, 零版本漂移
           set +e
           code-guard check --dir . --base origin/main > /tmp/cg.log 2>&1
           rc=$?
